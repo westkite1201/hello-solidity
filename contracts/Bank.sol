@@ -29,14 +29,18 @@ contract Bank {
         이 함수는 돈을 보내는 사람의 잔액을 줄이고 돈을 받는 사람의 잔액을 늘리는 것입니다. 
         마지막으로 이러한 상태 변경 후에 이벤트가 발생합니다.
     */
-    function withdraw(address _recipient, uint _amount) public {
+    function withdraw(address _recipient, uint _amount) public payable {
         require(_recipient != address(0) ,"Bank: Cannot Send to Address Zero");
         require(_amount <= balances[msg.sender], "Bank: Insufficient Balance");
-
+        
+        emit withdrawEvent(_amount, msg.sender, _recipient);
+                // Check enough balance available, otherwise just return balance
+     
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
 
-        emit withdrawEvent(_amount, msg.sender, _recipient);
+        payable(msg.sender).transfer(_amount);
+        
     }
     /*
         getBalance 함수
