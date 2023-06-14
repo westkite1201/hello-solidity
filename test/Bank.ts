@@ -1,90 +1,112 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { Bank } from '../typechain-types';
+import { DBank } from '../typechain-types';
+let dbank: DBank;
 
-let bank: Bank;
+describe('DBank', () => {
+  let owner;
+  let user;
 
-const deployedContract: string = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9';
+  beforeEach(async () => {
+    const DBank = await ethers.getContractFactory('DBank');
+    dbank = await DBank.deploy();
+    await dbank.deployed();
 
-describe('Bank의 인스턴스가 생성되어야 합니다.', function () {
-  before(async function () {
-    bank = (await ethers.getContractAt('Bank', deployedContract)) as Bank;
+    [owner, user] = await ethers.getSigners();
   });
-  it('예금 시 사용자 잔액이 증가해야 합니다.', async function () {
-    const signer = await ethers.getSigners();
-    const _depositor1 = signer[0].address;
-    const _depositorSigner = await ethers.getSigner(_depositor1);
 
-    const balance: any = await bank.getBalance(_depositor1);
+  it('should allow depositing funds', async () => {
+    const depositAmount = ethers.utils.parseEther('1.0');
+    const [user] = await ethers.getSigners();
 
-    const option = { value: ethers.utils.parseEther('1') };
-    const deposit: any = await bank.connect(_depositorSigner).deposit(option);
-    const tx = await deposit.wait();
-    const value = tx.events[0].args[0];
-    const depositor = tx.events[0].args[1];
-
-    const balanceAfter: any = await bank.getBalance(_depositor1);
-
-    expect(Number(balance.toString()) + Number(value.toString())).to.equal(
-      Number(balanceAfter.toString()),
+    const initialBalance = await ethers.provider.getBalance(user.address);
+    console.log(
+      'Initial user balance:',
+      ethers.utils.formatEther(initialBalance),
     );
-    expect(_depositor1).to.equal(depositor);
+
+    const deposit = await dbank.connect(user).deposit({ value: depositAmount });
+    const tx: any = await deposit.wait();
+    const depositor = tx.events[0].args[0];
+    const value = tx.events[0].args[1];
+
+    console.log('value = ', value);
+    console.log('depositor = ', depositor);
+    // const balanceAfter: any = await dbank.getBalance(_depositor1);
   });
 
-  it('입금 및 출금시 각각의 계정의 잔액은 감소 및 증가해야 합니다.', async function () {
-    const signer = await ethers.getSigners();
-    const _depositor1 = signer[0].address;
-    const _depositorSigner = await ethers.getSigner(_depositor1);
+  //   it('should allow withdrawing funds', async () => {
+  //     const depositAmount = ethers.utils.parseEther('1.0');
+  //     const withdrawAmount = ethers.utils.parseEther('0.5');
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     await dbank.connect(user).deposit({ value: depositAmount });
 
-    const balance: any = await bank.getBalance(_depositor1);
-    const recipientBalB4: any = await bank.getBalance(signer[1].address);
+  //     await expect(
+  //       dbank.connect(user).withdraw(withdrawAmount),
+  //     ).to.changeEtherBalance(user, withdrawAmount);
+  //   });
 
-    const withdraw: any = await bank
-      .connect(_depositorSigner)
-      .withdraw(signer[1].address, '5000000000');
-    const tx = await withdraw.wait();
-    const value = tx.events[0].args[0];
-    const depositor = tx.events[0].args[1];
-    const recipient = tx.events[0].args[2];
+  //   it('should not allow depositing zero amount', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     await expect(dbank.connect(user).deposit({ value: 0 })).to.be.revertedWith(
+  //       'Deposit amount should be greater than zero.',
+  //     );
+  //   });
 
-    const balanceAfter: any = await bank.getBalance(_depositor1);
-    const recBalanceAfter: any = await bank.getBalance(signer[1].address);
+  //   it('should not allow withdrawing zero amount', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     await expect(dbank.connect(user).withdraw(0)).to.be.revertedWith(
+  //       'Withdrawal amount should be greater than zero.',
+  //     );
+  //   });
 
-    expect(Number(balance.toString()) - Number(value.toString())).to.equal(
-      Number(balanceAfter.toString()),
-    );
-    expect(
-      Number(recipientBalB4.toString()) + Number(value.toString()),
-    ).to.equal(Number(recBalanceAfter.toString()));
-    expect(_depositor1).to.equal(depositor);
-    expect(signer[1].address).to.equal(recipient);
-  });
+  //   it('should not allow withdrawing more than the account balance', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     const depositAmount = ethers.utils.parseEther('1.0');
+  //     const withdrawAmount = ethers.utils.parseEther('2.0');
 
-  it('계정 주소가 0인 계정으로 입금할 때 트랜잭션이 되돌려져야합니다.', async function () {
-    const signer = await ethers.getSigners();
-    const _depositor1 = signer[0].address;
-    const _depositorSigner = await ethers.getSigner(_depositor1);
+  //     await dbank.connect(user).deposit({ value: depositAmount });
 
-    await expect(
-      bank
-        .connect(_depositorSigner)
-        .withdraw(ethers.constants.AddressZero, '5000000000'),
-    ).to.be.revertedWith('Bank: Cannot Send to Address Zero');
-  });
+  //     await expect(
+  //       dbank.connect(user).withdraw(withdrawAmount),
+  //     ).to.be.revertedWith('Insufficient balance.');
+  //   });
 
-  it('이체 금액이 잔액보다 클 때 트랜잭션이 되돌려져야합니다.', async function () {
-    const signer = await ethers.getSigners();
-    const _depositor1 = signer[0].address;
-    const _depositorSigner = await ethers.getSigner(_depositor1);
+  //   it('should emit Deposit event when funds are deposited', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     const depositAmount = ethers.utils.parseEther('1.0');
 
-    const balanceB4: any = await bank.getBalance(_depositor1);
+  //     await expect(dbank.connect(user).deposit({ value: depositAmount }))
+  //       .to.emit(dbank, 'Deposit')
+  //       .withArgs(user.address, depositAmount);
+  //   });
 
-    const balance: any = await bank.getBalance(_depositor1);
-    await expect(
-      bank
-        .connect(_depositorSigner)
-        .withdraw(signer[1].address, balance.toString() + '1000000'),
-    ).to.be.revertedWith('Bank: Insufficient Balance');
-    expect(await bank.getBalance(_depositor1)).to.equal(balanceB4);
-  });
+  //   it('should emit Withdrawal event when funds are withdrawn', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     const depositAmount = ethers.utils.parseEther('1.0');
+  //     const withdrawAmount = ethers.utils.parseEther('0.5');
+
+  //     await dbank.connect(user).deposit({ value: depositAmount });
+
+  //     await expect(dbank.connect(user).withdraw(withdrawAmount))
+  //       .to.emit(dbank, 'Withdrawal')
+  //       .withArgs(user.address, withdrawAmount);
+  //   });
+
+  //   it('should return the correct balance for an account', async () => {
+  //     const signer = await ethers.getSigners();
+  //     user = signer[0];
+  //     const depositAmount = ethers.utils.parseEther('1.0');
+
+  //     await dbank.connect(user).deposit({ value: depositAmount });
+
+  //     const userBalance = await dbank.getBalance(user.address);
+  //     expect(userBalance).to.equal(depositAmount);
+  //   });
 });

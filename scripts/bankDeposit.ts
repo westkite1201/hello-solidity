@@ -3,14 +3,10 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const CONTRACT_ADDRESS = '0xCA27d226B88Dba42e85A5Fb5801c76beAC3b65EC';
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 async function main() {
   // Get the deployed Bank contract
-  const Bank = await ethers.getContractFactory('Bank');
+  const Bank = await ethers.getContractFactory('DBank');
   const bank = await Bank.attach(CONTRACT_ADDRESS);
 
   // Get the signer and the user's address
@@ -20,7 +16,7 @@ async function main() {
   // Call the deposit function
   const depositTx = await bank
     .connect(signer)
-    .deposit({ value: ethers.utils.parseEther('0.0123') });
+    .deposit({ value: ethers.utils.parseEther('0.1') });
 
   await depositTx.wait();
 
