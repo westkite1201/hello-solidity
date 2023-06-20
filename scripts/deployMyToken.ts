@@ -4,8 +4,8 @@ async function main() {
   let initialSupply = '10000000000000000000000'; // 10000 * 1e18
   const myTokenFactory = await ethers.getContractFactory('MyToken');
   const myToken = await myTokenFactory.deploy(
-    'OpenZeppelin Token',
-    'OZT',
+    'Seoyeon Token',
+    'SEO',
     initialSupply,
   );
 
