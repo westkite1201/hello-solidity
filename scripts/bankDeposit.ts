@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const CONTRACT_ADDRESS = '0xB1D96ad598d76C726CFF5FAE197eBB13d8eb94AD';
 async function main() {
   // Get the deployed Bank contract
   const Bank = await ethers.getContractFactory('DBank');
